@@ -6,6 +6,8 @@ import time
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 from collections import deque
+running = True #This will be set to false later when the app is closed
+
 
 # === App Setup ===
 root = tk.Tk()
@@ -70,58 +72,72 @@ process_listbox.pack(pady=10)
 prev_net = psutil.net_io_counters()
 
 def update():
-    while True:
-        # CPU
-        cpu_percent = psutil.cpu_percent()
-        cpu_bar['value'] = cpu_percent
-        cpu_label.config(text=f"{cpu_percent:.1f}%")
-        cpu_history.append(cpu_percent)
+    global running # making running variable accessible to this function
+    while running:
+        try: 
+        
+            # CPU
+            cpu_percent = psutil.cpu_percent()
+            cpu_bar['value'] = cpu_percent
+            cpu_label.config(text=f"{cpu_percent:.1f}%")
+            cpu_history.append(cpu_percent)
 
-        # Memory
-        mem = psutil.virtual_memory()
-        mem_bar['value'] = mem.percent
-        mem_label.config(text=f"{mem.percent:.1f}%")
-        mem_history.append(mem.percent)
+            # Memory
+            mem = psutil.virtual_memory()
+            mem_bar['value'] = mem.percent
+            mem_label.config(text=f"{mem.percent:.1f}%")
+            mem_history.append(mem.percent)
 
-        # Disk
-        disk = psutil.disk_usage('/')
-        disk_bar['value'] = disk.percent
-        disk_label.config(text=f"{disk.percent:.1f}%")
+            # Disk
+            disk = psutil.disk_usage('/')
+            disk_bar['value'] = disk.percent
+            disk_label.config(text=f"{disk.percent:.1f}%")
 
-        # Battery
-        if psutil.sensors_battery():
-            batt = psutil.sensors_battery()
-            battery_bar['value'] = batt.percent
-            charging = " (Charging)" if batt.power_plugged else ""
-            battery_label.config(text=f"{batt.percent:.1f}%{charging}")
-        else:
-            battery_label.config(text="No Battery Info")
+            # Battery
+            if psutil.sensors_battery():
+                batt = psutil.sensors_battery()
+                battery_bar['value'] = batt.percent
+                charging = " (Charging)" if batt.power_plugged else ""
+                battery_label.config(text=f"{batt.percent:.1f}%{charging}")
+            else:
+                battery_label.config(text="No Battery Info")
 
-        # Network
-        global prev_net
-        curr_net = psutil.net_io_counters()
-        sent = (curr_net.bytes_sent - prev_net.bytes_sent) / (1024 * 1024)
-        recv = (curr_net.bytes_recv - prev_net.bytes_recv) / (1024 * 1024)
-        net_label.config(text=f"Network Sent: {sent:.2f} MB | Received: {recv:.2f} MB")
-        prev_net = curr_net
+            # Network
+            global prev_net
+            curr_net = psutil.net_io_counters()
+            sent = (curr_net.bytes_sent - prev_net.bytes_sent) / (1024 * 1024)
+            recv = (curr_net.bytes_recv - prev_net.bytes_recv) / (1024 * 1024)
+            net_label.config(text=f"Network Sent: {sent:.2f} MB | Received: {recv:.2f} MB")
+            prev_net = curr_net
 
-        # Top Processes
-        procs = [(p.info['pid'], p.info['name'], p.info['cpu_percent'])
-                 for p in psutil.process_iter(['pid', 'name', 'cpu_percent'])]
-        top_procs = sorted(procs, key=lambda x: x[2], reverse=True)[:5]
-        process_listbox.delete(0, tk.END)
-        for pid, name, cpu in top_procs:
-            process_listbox.insert(tk.END, f"{pid:>5} {name[:25]:<25} {cpu:>5.1f}%")
+            # Top Processes
+            procs = [(p.info['pid'], p.info['name'], p.info['cpu_percent'])
+                    for p in psutil.process_iter(['pid', 'name', 'cpu_percent'])]
+            top_procs = sorted(procs, key=lambda x: x[2], reverse=True)[:5]
+            process_listbox.delete(0, tk.END)
+            for pid, name, cpu in top_procs:
+                process_listbox.insert(tk.END, f"{pid:>5} {name[:25]:<25} {cpu:>5.1f}%")
 
-        # Graphs
-        cpu_line.set_ydata(list(cpu_history) + [0]*(60 - len(cpu_history)))
-        mem_line.set_ydata(list(mem_history) + [0]*(60 - len(mem_history)))
-        canvas.draw()
+            # Graphs
+            cpu_line.set_ydata(list(cpu_history) + [0]*(60 - len(cpu_history)))
+            mem_line.set_ydata(list(mem_history) + [0]*(60 - len(mem_history)))
+            canvas.draw()
 
+        except tk.TclError:
+            break
+        
         time.sleep(1)
+
 
 # === Start Thread ===
 threading.Thread(target=update, daemon=True).start()
 
+# === Function to control the thread ===
+def on_close():
+    global running # making running accessible to function
+    running = False
+    root.destroy()
+
 # === Run App ===
+root.protocol("WM_DELETE_WINDOW", on_close) # Using on close function here
 root.mainloop()
