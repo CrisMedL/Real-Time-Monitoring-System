@@ -1,11 +1,15 @@
-import tkinter as tk
-from tkinter import ttk
-import psutil
+import sys
 import threading
 import time
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib.pyplot as plt
 from collections import deque
+
+import tkinter as tk
+from tkinter import ttk
+
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import psutil
+
 running = True #This will be set to false later when the app is closed
 
 
@@ -136,7 +140,9 @@ threading.Thread(target=update, daemon=True).start()
 def on_close():
     global running # making running accessible to function
     running = False
-    root.destroy()
+    root.quit()     # ---] fixes error in commandline of program not closing properly
+    root.destroy()  # ---] fixes error in commandline of program not closing properly
+    sys.exit()
 
 # === Run App ===
 root.protocol("WM_DELETE_WINDOW", on_close) # Using on close function here
