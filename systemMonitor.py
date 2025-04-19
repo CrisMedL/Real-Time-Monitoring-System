@@ -16,12 +16,18 @@ running = True #This will be set to false later when the app is closed
 # === App Setup ===
 root = tk.Tk()
 root.title("Real-Time System Monitor")
-root.geometry("800x600")
+root.geometry("595x540")
 root.configure(bg="#f4f4f4")
 
 style = ttk.Style(root)
 style.theme_use("clam")
-style.configure("TProgressbar", thickness=20, troughcolor='#e0e0e0', background='#4caf50')
+style.configure("Custom.Horizontal.TProgressbar", 
+                thickness=20, 
+                troughcolor='#e0e0e0', 
+                background='#2196f3', 
+                bordercolor="#f4f4f4", 
+                lightcolor="#4fc3f7", 
+                darkcolor="#0288d1")
 
 # === Notebook Tabs ===
 tabs = ttk.Notebook(root)
@@ -35,11 +41,11 @@ tabs.pack(expand=1, fill='both')
 
 # === Overview Tab ===
 def make_section(title, parent):
-    label = tk.Label(parent, text=title, bg="#f4f4f4", font=("Helvetica", 12, "bold"))
+    label = tk.Label(parent, text=title, bg="#f4f4f4", font=("Segoe UI", 13, "bold"), fg="#333")
     label.pack(pady=(15, 0))
-    bar = ttk.Progressbar(parent, length=300, maximum=100, mode='determinate')
+    bar = ttk.Progressbar(parent, length=300, maximum=100, mode='determinate', style="Custom.Horizontal.TProgressbar")
     bar.pack(pady=(2, 5))
-    percent = tk.Label(parent, text="0%", bg="#f4f4f4")
+    percent = tk.Label(parent, text="0%", bg="#f4f4f4", font=("Segoe UI", 11), fg="#555")
     percent.pack()
     return bar, percent
 
